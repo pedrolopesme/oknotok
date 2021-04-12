@@ -8,6 +8,13 @@ import (
 // represents the current state of the circuit breaker
 type CircuitState int
 
+// default settings
+const (
+	defaultInterval              = time.Duration(0) * time.Second
+	defaultTimeout               = time.Duration(60) * time.Second
+	defaultMaxContinuousFailures = 5
+)
+
 // available states
 const (
 	StateOk CircuitState = iota
