@@ -46,3 +46,11 @@ func defaultReadyToTrip(stats Stats) bool {
 func defaultIsSuccessful(err error) bool {
 	return err == nil
 }
+
+// trigger a request if the current state of
+// OkNotOk allows it. In case of OkNotOk rejection,
+// an error will be returned.
+func (ok *OkNotOk) Call(req func() (interface{}, error)) (interface{}, error) {
+	result, err := req()
+	return result, err
+}

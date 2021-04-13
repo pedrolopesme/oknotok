@@ -2,6 +2,9 @@ package oknotok
 
 import "fmt"
 
+// represents the current state of the circuit breaker
+type CircuitState int
+
 // available states
 const (
 	StateOk CircuitState = iota
