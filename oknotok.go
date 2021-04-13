@@ -63,7 +63,7 @@ func NewOkNotOk(settings Settings) *OkNotOk {
 }
 
 func defaultReadyToTrip(stats Stats) bool {
-	return stats.ContinuousFailures > defaultMaxContinuousFailures
+	return stats.continuousFailures > defaultMaxContinuousFailures
 }
 
 func defaultIsSuccessful(err error) bool {
