@@ -71,3 +71,8 @@ type OkNotOk struct {
 	stateChanged func(name string, from, to CircuitState)
 	isSuccessful func(err error) bool
 }
+
+// exposes name
+func (ok *OkNotOk) Name() string {
+	return ok.Name()
+}
