@@ -14,13 +14,13 @@ const (
 // from sending requests that probably are going to fail.
 // Source of inspiration: https://martinfowler.com/bliki/CircuitBreaker.html
 type OkNotOk struct {
-	name         string
-	maxRequests  uint64
-	interval     time.Duration
-	timeout      time.Duration
-	readyToTrip  func(stats Stats) bool
-	stateChanged func(name string, from, to CircuitState)
-	isSuccessful func(err error) bool
+	name              string
+	maxHalfOkRequests uint64
+	interval          time.Duration
+	timeout           time.Duration
+	healed            func(stats Stats) bool
+	stateChanged      func(name string, from, to CircuitState)
+	shouldCountError  func(err error) bool
 }
 
 // returns a new OkNotOk instance properly configured
@@ -35,10 +35,10 @@ func NewOkNotOk(settings Settings) *OkNotOk {
 		oknok.interval = defaultInterval
 	}
 
-	if settings.MaxRequests > 0 {
-		oknok.maxRequests = settings.MaxRequests
+	if settings.MaxHalfOkRequests > 0 {
+		oknok.maxHalfOkRequests = settings.MaxHalfOkRequests
 	} else {
-		oknok.maxRequests = 1
+		oknok.maxHalfOkRequests = 1
 	}
 
 	if settings.Timeout > 0 {
@@ -47,26 +47,26 @@ func NewOkNotOk(settings Settings) *OkNotOk {
 		oknok.timeout = defaultTimeout
 	}
 
-	if settings.IsSuccessful != nil {
-		oknok.isSuccessful = settings.IsSuccessful
+	if settings.ShoulCountError != nil {
+		oknok.shouldCountError = settings.ShoulCountError
 	} else {
-		oknok.isSuccessful = defaultIsSuccessful
+		oknok.shouldCountError = defaultShouldCountError
 	}
 
-	if settings.ReadyToTrip != nil {
-		oknok.readyToTrip = settings.ReadyToTrip
+	if settings.Healed != nil {
+		oknok.healed = settings.Healed
 	} else {
-		oknok.readyToTrip = defaultReadyToTrip
+		oknok.healed = defaultHealed
 	}
 
 	return &oknok
 }
 
-func defaultReadyToTrip(stats Stats) bool {
+func defaultHealed(stats Stats) bool {
 	return stats.continuousFailures > defaultMaxContinuousFailures
 }
 
-func defaultIsSuccessful(err error) bool {
+func defaultShouldCountError(err error) bool {
 	return err == nil
 }
 
