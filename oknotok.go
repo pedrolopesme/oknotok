@@ -27,58 +27,15 @@ type OkNotOk struct {
 	stats           Stats
 }
 
-// returns a new OkNotOk instance properly configured
-func NewOkNotOk(settings Settings) *OkNotOk {
-	oknok := OkNotOk{}
-	oknok.name = settings.Name
-	oknok.stateChanged = settings.StateChanged
-
-	if settings.Interval > 0 {
-		oknok.interval = settings.Interval
-	} else {
-		oknok.interval = defaultInterval
-	}
-
-	if settings.MaxHalfOkRequests > 0 {
-		oknok.maxHalfOkRequests = settings.MaxHalfOkRequests
-	} else {
-		oknok.maxHalfOkRequests = 1
-	}
-
-	if settings.Timeout > 0 {
-		oknok.timeout = settings.Timeout
-	} else {
-		oknok.timeout = defaultTimeout
-	}
-
-	if settings.ShoulCountError != nil {
-		oknok.shouldCountError = settings.ShoulCountError
-	} else {
-		oknok.shouldCountError = defaultShouldCountError
-	}
-
-	if settings.Healed != nil {
-		oknok.healed = settings.Healed
-	} else {
-		oknok.healed = defaultHealed
-	}
-
-	return &oknok
-}
-
-func defaultHealed(stats Stats) bool {
-	return stats.continuousFailures > defaultMaxContinuousFailures
-}
-
-func defaultShouldCountError(err error) bool {
-	return err == nil
-}
-
 // trigger a request if the current state of
 // OkNotOk allows it. In case of OkNotOk rejection,
 // an error will be returned.
-// TODO implement PreCall and PostCall
+// TODO implement PostCall
 func (ok *OkNotOk) Call(req func() (interface{}, error)) (interface{}, error) {
+	if err := ok.preCall(); err != nil {
+		return nil, err
+	}
+
 	result, err := req()
 	return result, err
 }
@@ -158,4 +115,51 @@ func (ok *OkNotOk) restartClock(now time.Time) {
 		}
 	}
 
+}
+
+// returns a new OkNotOk instance properly configured
+func NewOkNotOk(settings Settings) *OkNotOk {
+	oknok := OkNotOk{}
+	oknok.name = settings.Name
+	oknok.stateChanged = settings.StateChanged
+
+	if settings.Interval > 0 {
+		oknok.interval = settings.Interval
+	} else {
+		oknok.interval = defaultInterval
+	}
+
+	if settings.MaxHalfOkRequests > 0 {
+		oknok.maxHalfOkRequests = settings.MaxHalfOkRequests
+	} else {
+		oknok.maxHalfOkRequests = 1
+	}
+
+	if settings.Timeout > 0 {
+		oknok.timeout = settings.Timeout
+	} else {
+		oknok.timeout = defaultTimeout
+	}
+
+	if settings.ShoulCountError != nil {
+		oknok.shouldCountError = settings.ShoulCountError
+	} else {
+		oknok.shouldCountError = defaultShouldCountError
+	}
+
+	if settings.Healed != nil {
+		oknok.healed = settings.Healed
+	} else {
+		oknok.healed = defaultHealed
+	}
+
+	return &oknok
+}
+
+func defaultHealed(stats Stats) bool {
+	return stats.continuousFailures > defaultMaxContinuousFailures
+}
+
+func defaultShouldCountError(err error) bool {
+	return err == nil
 }
