@@ -1,1 +1,1 @@
-package oknotok
+package go_oknotok

@@ -1,4 +1,4 @@
-package oknotok
+package go_oknotok
 
 import "fmt"
 
