@@ -36,10 +36,21 @@ func (ok *OkNotOk) Call(req func() (interface{}, error)) (interface{}, error) {
 		return nil, err
 	}
 
+	// when a panic was thrown, we update stats and throw the
+	// panic up to the application
+	defer func() {
+		if err := recover(); err != nil {
+			ok.postCall(ErrPanicCall)
+			panic(err)
+		}
+	}()
+
 	result, err := req()
+	ok.postCall(err)
 	return result, err
 }
 
+// check state before make the call
 // TODO make it thread-safe
 func (ok *OkNotOk) preCall() error {
 	now := time.Now()
@@ -55,6 +66,19 @@ func (ok *OkNotOk) preCall() error {
 
 	ok.stats.onCall()
 	return nil
+}
+
+// check state after make the call
+// TODO make it thread-safe
+func (ok *OkNotOk) postCall(err error) {
+	now := time.Now()
+	state := ok.defineCurrentState(now)
+
+	if ok.shouldCountError(err) {
+		ok.onFailure(state, now)
+	} else {
+		ok.onSuccess(state, now)
+	}
 }
 
 // detects if OkNotOk has reached its max calls config in halfOK state
@@ -114,7 +138,32 @@ func (ok *OkNotOk) restartClock(now time.Time) {
 			ok.stateExpiration = now.Add(ok.interval)
 		}
 	}
+}
 
+// change internal state of the circuit in case of a success request
+func (ok *OkNotOk) onSuccess(state CircuitState, now time.Time) {
+	switch state {
+	case StateOk:
+		ok.stats.onSuccess()
+	case StateHalfOk:
+		ok.stats.onSuccess()
+		if ok.stats.continuousSuccesses >= ok.maxHalfOkRequests {
+			ok.setState(StateOk, now)
+		}
+	}
+}
+
+// change internal state of the circuit in case of a failed request
+func (ok *OkNotOk) onFailure(state CircuitState, now time.Time) {
+	switch state {
+	case StateOk:
+		ok.stats.onFailure()
+		if ok.healed(ok.stats) {
+			ok.setState(StateNotOk, now)
+		}
+	case StateHalfOk:
+		ok.setState(StateNotOk, now)
+	}
 }
 
 // returns a new OkNotOk instance properly configured
