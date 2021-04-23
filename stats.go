@@ -1,4 +1,4 @@
-package go_oknotok
+package oknotok
 
 // keeps the current status of the requests, their failures and successes
 // TODO clear the internal status on the change of the state and/or at the

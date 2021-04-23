@@ -1,4 +1,4 @@
-package go_oknotok
+package oknotok
 
 import "errors"
 

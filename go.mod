@@ -1,3 +1,3 @@
-module github.com/pedrolopesme/go-oknotok
+module github.com/pedrolopesme/oknotok
 
 go 1.16
